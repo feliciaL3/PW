@@ -252,6 +252,50 @@ app.delete('/liked-books', authenticateToken, checkAdminRole, (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /liked-books/unprotected:
+ *   delete:
+ *     summary: Delete books by author without authentication
+ *     tags: [Liked Books]
+ *     parameters:
+ *       - in: query
+ *         name: author
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The author whose books will be deleted
+ *     responses:
+ *       200:
+ *         description: Books successfully deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   description: Confirmation message
+ *       404:
+ *         description: No books found by the specified author
+ */
+
+app.delete('/liked-books/unprotected', (req, res) => {
+    const { author } = req.query;
+    let likedBooks = JSON.parse(fs.readFileSync('likedBooks.json', 'utf8'));
+
+    const booksToDelete = likedBooks.filter(book => book.author.includes(author));
+
+    if (booksToDelete.length > 0) {
+        likedBooks = likedBooks.filter(book => !book.author.includes(author));
+        fs.writeFileSync('likedBooks.json', JSON.stringify(likedBooks));
+        res.json({ message: "Books by the specified author successfully deleted" });
+    } else {
+        res.status(404).json({ error: "No books found by the specified author" });
+    }
+});
+
+
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Start the server
