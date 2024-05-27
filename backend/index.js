@@ -1,11 +1,12 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
-require('dotenv').config();  // Încarcă variabilele din .env
+require('dotenv').config(); // Încarcă variabilele din .env
 const app = express();
 app.use(express.json());
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./swagger/swaggerConfig');
+const fs = require('fs');
 
 app.use(cors({
     origin: 'http://localhost:3000'
@@ -37,6 +38,14 @@ function authenticateToken(req, res, next) {
         req.user = user;
         next();
     });
+}
+
+// Middleware to check admin role
+function checkAdminRole(req, res, next) {
+    if (req.user.role !== 'ADMIN') {
+        return res.sendStatus(403);
+    }
+    next();
 }
 
 /**
@@ -202,6 +211,44 @@ app.get('/user-data', authenticateToken, (req, res) => {
         return res.status(403).json({ error: "Access Forbidden" });
     } else {
         res.json({ username: req.user.username, role: req.user.role, permissions: req.user.permissions });
+    }
+});
+
+/**
+ * @swagger
+ * /liked-books:
+ *   delete:
+ *     summary: Delete a book from LikedBooks by author (Admin only)
+ *     tags: [LikedBooks]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: author
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The author of the book to delete
+ *     responses:
+ *       200:
+ *         description: Book successfully deleted
+ *       403:
+ *         description: Forbidden, only admin can delete books
+ *       404:
+ *         description: Book not found
+ */
+app.delete('/liked-books', authenticateToken, checkAdminRole, (req, res) => {
+    const { author } = req.query;
+    let likedBooks = JSON.parse(fs.readFileSync('likedBooks.json'));
+
+    const booksToDelete = likedBooks.filter(book => book.author.includes(author));
+
+    if (booksToDelete.length > 0) {
+        likedBooks = likedBooks.filter(book => !book.author.includes(author));
+        fs.writeFileSync('likedBooks.json', JSON.stringify(likedBooks));
+        res.json({ message: "Books by the specified author successfully deleted" });
+    } else {
+        res.status(404).json({ error: "No books found by the specified author" });
     }
 });
 
