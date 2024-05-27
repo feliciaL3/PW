@@ -1,12 +1,5 @@
 import * as React from 'react';
 import { useState } from 'react';
-import { styled, alpha, useTheme } from '@mui/material/styles';
-import Box from '@mui/material/Box';
-import Brightness4Icon from '@mui/icons-material/Brightness4';
-import Brightness7Icon from '@mui/icons-material/Brightness7';
-import Drawer from './Drawer';
-import { useLocation } from 'react-router-dom';
-import Hidden from '@mui/material/Hidden';
 import { AppBar, Toolbar, Typography, Switch, IconButton, InputBase } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
